@@ -949,9 +949,17 @@
         sendAnswersBtn.addEventListener('click', sendAnswers);
 
         function getFileName() {
-            const pib = `${lastNameInput.value}_${firstNameInput.value}_${patronymicInput.value}`;
-            let unitPath = getUnitPathForFileName(true);
-            return `${unitPath} ${selectionState.position} ${selectionState.rank} ${pib}`;
+            // Формуємо частину з іменем: тільки прізвище та ім'я
+            const namePart = `${lastNameInput.value}_${firstNameInput.value}`;
+        
+            // Отримуємо рядок з назвою підрозділу
+            const unitString = getUnitPathForFileName(true);
+        
+            // Беремо тільки звання, посаду ігноруємо
+            const rank = selectionState.rank.replace(/ /g, '_');
+        
+            // Збираємо фінальну назву файлу без посади
+            return `${unitString}_${rank}_${namePart}`;
         }
 
         function getSten(scaleKey, rawScore) {
