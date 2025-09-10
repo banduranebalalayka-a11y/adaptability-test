@@ -2,10 +2,11 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Опитувальник "Адаптивність-200"</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#007bff">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -21,11 +22,16 @@
             background-color: var(--light-gray);
             margin: 0;
             padding: 15px;
+            padding-top: calc(15px + env(safe-area-inset-top));
+            padding-right: calc(15px + env(safe-area-inset-right));
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            padding-left: calc(15px + env(safe-area-inset-left));
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
             color: #333;
+            box-sizing: border-box;
         }
 
         .container {
@@ -213,6 +219,8 @@
         
         #prev-button {
             width: 100%;
+            padding: 15px; /* Increased padding */
+            font-size: 18px; /* Increased font size */
         }
 
         #post-quiz-section {
@@ -799,7 +807,8 @@
 
         sendAnswersBtn.addEventListener('click', () => {
             const scores = calculateResults();
-
+            const txtBlob = generateTxtReport(scores, true); // Generate blob without downloading
+            
             sendAnswersBtn.disabled = true;
             sendAnswersBtn.textContent = 'Надсилання...';
             
@@ -810,17 +819,16 @@
                 return;
             }
             
-            const reportText = generateTelegramMessage(scores);
-            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            const formData = new FormData();
+            formData.append('chat_id', TELEGRAM_CHAT_ID);
+            formData.append('document', txtBlob, `${getFileName()}.txt`);
+            formData.append('caption', generateTelegramCaption(scores));
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`;
             
             fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: reportText,
-                    parse_mode: 'Markdown'
-                })
+                body: formData,
             })
             .then(response => response.json())
             .then(data => {
@@ -840,6 +848,19 @@
             });
         });
         
+        function getFileName() {
+            const pib = `${lastNameInput.value}_${firstNameInput.value}_${patronymicInput.value}`;
+            let unitPath = '';
+            if (selectionState.isCompany) {
+                const unitMatch = selectionState.unit.match(/\d+/);
+                const platoonMatch = selectionState.platoon.match(/\d+/);
+                const squadMatch = selectionState.squad.match(/\d+/);
+                unitPath = `${unitMatch ? unitMatch[0] : '0'} роти охорони ${platoonMatch ? platoonMatch[0] : '0'} взводу охорони ${squadMatch ? squadMatch[0] : '0'} відділення охорони`;
+            } else {
+                unitPath = selectionState.unit.replace(/ /g, '_');
+            }
+            return `${selectionState.position} ${unitPath} 6 батальйону охорони ${pib}`;
+        }
         
         function getSten(scaleKey, rawScore) {
             const scale = stenScales[scaleKey];
@@ -908,24 +929,44 @@
             return {fullText};
         }
 
-        function generateTelegramMessage(scores) {
+        function generateTelegramCaption(scores) {
             const pib = `${lastNameInput.value} ${firstNameInput.value} ${patronymicInput.value}`;
             let unitPath = `6 батальйону охорони / ${selectionState.unit}`;
             if (selectionState.platoon) unitPath += ` / ${selectionState.platoon}`;
             if (selectionState.squad) unitPath += ` / ${selectionState.squad}`;
             
-            let message = `*Звіт "Адаптивність-200"*\n\n`;
-            message += `*ПІБ:* ${pib}\n`;
-            message += `*Підрозділ:* ${unitPath}\n`;
-            message += `*Посада:* ${selectionState.position}\n`;
-            message += `*Звання:* ${selectionState.rank}\n`;
-            message += `*Дата:* ${new Date().toLocaleString('uk-UA')}\n`;
-            message += `=================================\n\n`;
+            let caption = `Звіт "Адаптивність-200"\n\n`;
+            caption += `ПІБ: ${pib}\n`;
+            caption += `Підрозділ: ${unitPath}\n`;
+            caption += `Посада: ${selectionState.position}\n`;
+            caption += `Звання: ${selectionState.rank}\n`;
+            caption += `Дата: ${new Date().toLocaleString('uk-UA')}`;
+            
+            return caption;
+        }
+
+        function generateTxtReport(scores, returnBlob = false) {
+            const pib = `${lastNameInput.value} ${firstNameInput.value} ${patronymicInput.value}`;
+            let unitPath = `6 батальйону охорони / ${selectionState.unit}`;
+            if (selectionState.platoon) unitPath += ` / ${selectionState.platoon}`;
+            if (selectionState.squad) unitPath += ` / ${selectionState.squad}`;
+
+            let content = `ЗВІТ "АДАПТИВНІСТЬ-200"\n`;
+            content += `=================================\n`;
+            content += `ПІБ: ${pib}\n`;
+            content += `Підрозділ: ${unitPath}\n`;
+            content += `Посада: ${selectionState.position}\n`;
+            content += `Звання: ${selectionState.rank}\n`;
+            content += `Дата: ${new Date().toLocaleString('uk-UA')}\n`;
+            content += `=================================\n\n`;
             
             const interpretationData = generateInterpretation(scores);
-            message += interpretationData.fullText.replace(/---/g, '').replace(/=/g, '');
+            content += interpretationData.fullText;
 
-            return message;
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            if (returnBlob) {
+                return blob;
+            }
         }
         
         // Initial setup
