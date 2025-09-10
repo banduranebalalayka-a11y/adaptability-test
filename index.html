@@ -1089,22 +1089,20 @@
             }
         }
 
-        function getUnitPathForFileName(forFileName = false){
-            let unitPath = '';
+        function getUnitPathForFileName(forFileName = false) {
             const separator = forFileName ? '_' : ' ';
-            if (selectionState.isCompany) {
-                const unitMatch = selectionState.unit.match(/\d+/);
-                const platoonMatch = selectionState.platoon.match(/\d+/);
-                const squadMatch = selectionState.squad.match(/\d+/);
-                unitPath = `${squadMatch ? squadMatch[0] : '0'}${separator}відділення${separator}охорони${separator}${platoonMatch ? platoonMatch[0] : '0'}${separator}взводу${separator}охорони${separator}${unitMatch ? unitMatch[0] : '0'}${separator}роти${separator}охорони${separator}6${separator}батальйону${separator}охорони`;
+            let unitString = '';
+        
+            // Перевіряємо, чи це рота і чи обрано взвод
+            if (selectionState.isCompany && selectionState.platoon) {
+                const companyName = selectionState.unit.replace(/ /g, separator);
+                const platoonName = selectionState.platoon.replace(/ /g, separator);
+                unitString = `${companyName}${separator}${platoonName}`;
             } else {
-                unitPath = selectionState.unit.replace(/ /g, separator) + `${separator}6${separator}батальйону${separator}охорони`;
+                // Для окремих підрозділів (медпункт, відділення забезпечення і т.д.)
+                unitString = selectionState.unit.replace(/ /g, separator);
             }
-
-            if (!forFileName) {
-               return unitPath.replace(/_/g, ' ');
-            }
-            return unitPath;
+            return unitString;
         }
 
         // Initial setup
