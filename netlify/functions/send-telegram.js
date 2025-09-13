@@ -6,20 +6,16 @@ exports.handler = async function (event) {
   const telegramUrl = `https://api.telegram.org/bot${botToken}/sendDocument`;
 
   try {
-    // Отримуємо дані, які надіслав сайт у форматі JSON
     const { file_data, file_name, caption, chat_id } = JSON.parse(event.body);
-
-    // Перетворюємо текстові дані (Base64) назад у файл (Buffer)
     const fileBuffer = Buffer.from(file_data, 'base64');
 
-    // Створюємо нову форму для відправки в Telegram
+    // --- ОНОВЛЕНИЙ БЛОК ---
     const formData = new FormData();
-    formData.append('chat_id', chat_id);
-    formData.append('caption', caption);
+    formData.append('chat_id', String(chat_id));
+    formData.append('caption', String(caption));
     formData.append('document', fileBuffer, file_name);
-    formData.append('disable_notification', true);
+    formData.append('disable_notification', String(true)); // Виправлено
     
-    // Відправляємо запит до Telegram
     const response = await fetch(telegramUrl, {
       method: 'POST',
       body: formData,
