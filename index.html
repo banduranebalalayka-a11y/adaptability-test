@@ -868,7 +868,6 @@
             location.reload();
         });
 
-        // ОНОВЛЕНА ФУНКЦІЯ
         async function sendAnswers() {
             sendAnswersBtn.disabled = true;
             sendAnswersBtn.textContent = 'Надсилання...';
@@ -897,7 +896,6 @@
             }
         }
 
-        // ОНОВЛЕНА ФУНКЦІЯ
         async function sendDocumentToTelegram(blob, fileName, caption) {
             const reader = new FileReader();
             reader.readAsDataURL(blob);
@@ -1080,7 +1078,7 @@
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js?v=1.2')
+                navigator.serviceWorker.register('service-worker.js?v=1.0')
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);
                     })
