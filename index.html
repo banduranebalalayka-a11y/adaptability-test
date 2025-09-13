@@ -1074,7 +1074,7 @@
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js?v=1.0') // Додано версію
+                navigator.serviceWorker.register('service-worker.js?v=1.1') // Додано версію
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);
                     })
