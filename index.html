@@ -868,23 +868,22 @@
             location.reload();
         });
 
+        // ОНОВЛЕНА ФУНКЦІЯ
         async function sendAnswers() {
             sendAnswersBtn.disabled = true;
             sendAnswersBtn.textContent = 'Надсилання...';
             
-            const scores = calculateResults();
-            const txtBlob = generateTxtReport(scores, true);
-            const xlsxBlob = await generateXlsxReport(true);
-
-            const txtCaption = generateTelegramCaption(scores);
-            const xlsxCaption = `Деталізовані відповіді для: ${lastNameInput.value} ${firstNameInput.value}`;
-
             try {
-                // Надсилаємо перший документ (TXT)
+                const scores = calculateResults();
+                const txtBlob = generateTxtReport(scores, true);
+                const xlsxBlob = await generateXlsxReport(true);
+        
+                const txtCaption = generateTelegramCaption(scores);
+                const xlsxCaption = `Деталізовані відповіді для: ${lastNameInput.value} ${firstNameInput.value}`;
+
                 const txtResponse = await sendDocumentToTelegram(txtBlob, `${getFileName()}.txt`, txtCaption);
                 if (txtResponse.error) throw new Error(txtResponse.error);
 
-                // Надсилаємо другий документ (XLSX)
                 const xlsxResponse = await sendDocumentToTelegram(xlsxBlob, `${getFileName()}.xlsx`, xlsxCaption);
                 if (xlsxResponse.error) throw new Error(xlsxResponse.error);
 
@@ -898,18 +897,25 @@
             }
         }
 
+        // ОНОВЛЕНА ФУНКЦІЯ
         async function sendDocumentToTelegram(blob, fileName, caption) {
-            const formData = new FormData();
-            formData.append('chat_id', TELEGRAM_CHAT_ID); 
-            formData.append('document', blob, fileName);
-            formData.append('caption', caption);
-            formData.append('disable_notification', true);
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            
+            await new Promise(resolve => reader.onload = resolve);
+            
+            const file_data = reader.result.split(',')[1];
 
             const url = `/.netlify/functions/send-telegram`;
 
             const response = await fetch(url, {
                 method: 'POST',
-                body: formData,
+                body: JSON.stringify({
+                    file_data: file_data,
+                    file_name: fileName,
+                    caption: caption,
+                    chat_id: TELEGRAM_CHAT_ID
+                })
             });
             return await response.json();
         }
@@ -1074,7 +1080,7 @@
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js?v=1.1') // Додано версію
+                navigator.serviceWorker.register('service-worker.js?v=1.2')
                     .then(registration => {
                         console.log('ServiceWorker registration successful with scope: ', registration.scope);
                     })
