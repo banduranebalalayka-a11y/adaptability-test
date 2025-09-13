@@ -1,10 +1,12 @@
 exports.handler = async function (event) {
-  // Цей рядок бере секретний токен з налаштувань Netlify
+  // ----> ДОДАЙТЕ ЦЕЙ РЯДОК <----
+  console.log("Function started. Is token loaded?", !!process.env.TELEGRAM_BOT_TOKEN);
+
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const telegramUrl = `https://api.telegram.org/bot${botToken}/sendDocument`;
 
+  // ... решта коду функції залишається без змін
   try {
-    // Цей код просто пересилає запит від вашого сайту до Telegram
     const response = await fetch(telegramUrl, {
       method: 'POST',
       body: event.body,
