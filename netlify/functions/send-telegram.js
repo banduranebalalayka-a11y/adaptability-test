@@ -1,16 +1,28 @@
-exports.handler = async function (event) {
-  // ----> ДОДАЙТЕ ЦЕЙ РЯДОК <----
-  console.log("Function started. Is token loaded?", !!process.env.TELEGRAM_BOT_TOKEN);
+const fetch = require('node-fetch');
+const FormData = require('form-data');
 
+exports.handler = async function (event) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const telegramUrl = `https://api.telegram.org/bot${botToken}/sendDocument`;
 
-  // ... решта коду функції залишається без змін
   try {
+    // Отримуємо дані, які надіслав сайт у форматі JSON
+    const { file_data, file_name, caption, chat_id } = JSON.parse(event.body);
+
+    // Перетворюємо текстові дані (Base64) назад у файл (Buffer)
+    const fileBuffer = Buffer.from(file_data, 'base64');
+
+    // Створюємо нову форму для відправки в Telegram
+    const formData = new FormData();
+    formData.append('chat_id', chat_id);
+    formData.append('caption', caption);
+    formData.append('document', fileBuffer, file_name);
+    formData.append('disable_notification', true);
+    
+    // Відправляємо запит до Telegram
     const response = await fetch(telegramUrl, {
       method: 'POST',
-      body: event.body,
-      headers: event.headers,
+      body: formData,
     });
 
     if (!response.ok) {
