@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adaptability-test-v23'; // Version updated to v23 to force update
+const CACHE_NAME = 'adaptability-test-v25'; // Version updated to v23 to force update
 const urlsToCache = [
   '.',
   'index.html',
